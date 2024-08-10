@@ -1,75 +1,122 @@
-import { useState } from "react"; //useState is used to  
-import "./App.css"; 
-import Count from "./Pages/Count"; //import the count from the pages
-import Button from "./Component/Button"
+/* eslint-disable react/jsx-key */
+import { useEffect, useState } from "react";
+import "./App.css";
+import styled from "styled-components";
+import PreviewPets from "./Component/PreviewPets";
+import Button from "./Component/Button";
 
-//main component
+const Wrapper = styled.div`
+  display: flex;
+
+  .petListContainer {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    padding: 24px;
+    height: 100vh;
+    overflow-y: auto;
+  }
+`;
+
+const StyledCard = styled.div`
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  width: 300px;
+  height: 370px;
+
+  .imageContainer {
+    width: 100%;
+    height: 60%;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 8px 8px 0 0;
+    }
+  }
+
+  .textBody {
+    padding: 8px;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    h2 {
+      font-size: 20px;
+      margin: 2px 0;
+    }
+
+    p {
+      max-width: 100%;
+      overflow-wrap: break-word;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      height: 92%;
+    }
+
+    .previewBtn {
+    height: 36px;
+    border: none;
+    border-radius: 8px
+    }
+  }
+`;
+
 function App() {
-  const [students, setStudents] = useState([]); //given an empty array to store data
+  const [pets, setPets] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [petPreview, setPetPreview] = useState({})
 
-  const [name, setName] = useState(""); //update the name
-  const [age, setAge] = useState(""); //update the age
-
-  //function to add the student; (e) means event
-  const addStudent = (e) => {
-    //refresh the page
-    e.preventDefault();
-    //check name and age are not empty
-    if (name && age) {
-      const newStudent = {
-        id: students.length + 1,
-        name,
-        //converted to a number using parseInt
-        age: parseInt(age),
-      };
-      setStudents((prev) => [...prev, newStudent]); // This line ensures the new student is added to the list
-      setName("");
-      setAge("");
+  const fetchPets = async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch("http://pets-v2.dev-apis.com/pets");
+      const data = await res.json();
+      setPets(data.pets);
+      setIsLoading(false);
+    } catch (error) {
+      console.log(error);
+      setIsLoading(false);
     }
   };
 
-  const deleteStudent = (id) => {
-    const newStudents = students.filter((student) => student.id !== id);
-    setStudents(newStudents);
-  };
+  const handleSetPreview = (pet) => {
+    setPetPreview(pet);
+  }
+  useEffect(() => {
+    fetchPets();
+  }, []);
+
+  if (isLoading) {
+    return <h1>Loading...</h1>;
+  }
 
   return (
-    //structure of the UI
-    <div className="container">
-      <form onSubmit={addStudent}>
-        <input
-          type="text"
-          placeholder="Enter your name"
-          value={name}
-          //is a text input field for the name
-          onChange={(e) => setName(e.target.value)}
-        />
-        <input
-          type="text"
-          placeholder="Enter your age"
-          value={age}
-          //is a text input field for age
-          onChange={(e) => setAge(e.target.value)}
-        />
-        <button type="submit">Add Student</button>
-      </form>
-      {/* it loops through the students array and render a div for each student */}
-      {students.map((student) => (
-        <div key={student.id} className="student" style={{
-          display: "flex",
-          justifyContent: "space-between",
-          border: "2px solid black",
-          padding: "5px",
-          marginTop: "8px",
-        }}>
-          <p>{student.name}</p>
-          <p>{student.age}</p>
+    <Wrapper>
+      <div className="petListContainer">
+        {pets?.map((pet) => (
+          <StyledCard>
+            <div className="imageContainer">
+              <img src={pet?.images[0]} alt="" />
+            </div>
 
-          <Button text="Delete" bg="red" onClick={() => deleteStudent(student.id)} />
-        </div>
-      ))}
-      <Count />
-    </div>
+            <div className="textBody">
+              <h2>{pet.name}</h2>
+              <p>{pet?.description}</p>
+              <Button text="Preview" bg="#344648" color="#fff" className="previewBtn" onClick={() => handleSetPreview(pet)}/>
+            </div>
+          </StyledCard>
+        ))}
+      </div>
+
+      <PreviewPets petPreview={petPreview}/>
+    </Wrapper>
   );
 }
 

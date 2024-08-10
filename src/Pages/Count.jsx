@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Button from "../Component/Button";
+import {useEffect} from "react";
 
 function Count() {
   const [count, setCount] = useState(0);
@@ -16,6 +17,11 @@ function Count() {
     });
   };
 
+   useEffect(() => {
+    if(count % 2 === 0){
+      alert("Nah Even number o")
+    }
+   }, [count])
   return (
     <div>
       <h1>App Counter</h1>
